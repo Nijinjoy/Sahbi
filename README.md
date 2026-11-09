@@ -1,5 +1,22 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
+# App Theme
+
+The entire app uses **two colours**. Every screen, button and component should be built from these:
+
+| Role | Colour | Use for |
+|---|---|---|
+| **Primary** | `#F2B84B` (gold) | Buttons, highlights, icons, active states, splash background |
+| **Secondary** | `#14213D` (navy) | Headings, body text, text on gold |
+
+Supporting colours:
+
+- Screen background: `#FFFFFF` (white)
+- Muted text on white: `#5B6478`
+- Text on gold: `#14213D` (navy)
+
+All colours are defined in [`src/theme/colors.ts`](src/theme/colors.ts). Always import them from there (`colors.primary`, `colors.secondary`) instead of hard-coding hex values, so the theme can be changed in one place.
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
