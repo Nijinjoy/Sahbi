@@ -1,89 +1,72 @@
 export type Chat = {
   id: string;
   name: string;
-  groupEmoji?: string;
-  members?: number;
+  listingId: string;
+  role: 'buying' | 'selling';
   lastMessage: string;
-  lastSender?: string;
   time: string;
   unread: number;
   online?: boolean;
   typing?: boolean;
 };
 
-export const SAMPLE_WAVES = ['Noor', 'Leo', 'Sara', 'Ali', 'Hana', 'Yusuf'];
-
-export const CITY_EVENT_CHATS: Record<string, Chat> = {
-  'dubai-run-2026': {
-    id: 'group-dubai-run-2026',
-    name: 'Dubai Run crew',
-    groupEmoji: '🏃',
-    members: 129,
-    lastSender: 'Omar',
-    lastMessage: 'Meeting at the Museum of the Future at 6 AM?',
-    time: 'now',
-    unread: 3,
-  },
-};
-
 export const SAMPLE_CHATS: Chat[] = [
   {
     id: 'c1',
     name: 'Aisha',
-    lastMessage: 'Found a café in Al Quoz with amazing flat whites ☕',
+    listingId: 'l1',
+    role: 'buying',
+    lastMessage: 'Sure, you can pick it up Saturday after 4 PM 🙂',
     time: '2m',
     unread: 2,
     online: true,
   },
   {
     id: 'c2',
-    name: 'Friday padel doubles',
-    groupEmoji: '🎾',
-    members: 6,
-    lastSender: 'Rahul',
-    lastMessage: 'Court 3 is booked for 7 PM',
-    time: '18m',
-    unread: 5,
-  },
-  {
-    id: 'c3',
     name: 'Rahul',
+    listingId: 'l2',
+    role: 'buying',
     lastMessage: 'typing…',
-    time: '1h',
+    time: '18m',
     unread: 0,
     online: true,
     typing: true,
   },
   {
-    id: 'c4',
-    name: 'Maria',
-    lastMessage: 'You: Brunch on Saturday sounds perfect!',
-    time: '9:41 AM',
+    id: 'c3',
+    name: 'Omar',
+    listingId: 'l3',
+    role: 'buying',
+    lastMessage: 'You: Would you take AED 400?',
+    time: '1h',
     unread: 0,
+  },
+  {
+    id: 'c4',
+    name: 'Priya',
+    listingId: 'l5',
+    role: 'buying',
+    lastMessage: 'It’s still available, yes!',
+    time: 'Yesterday',
+    unread: 1,
   },
   {
     id: 'c5',
-    name: 'Sunrise hike',
-    groupEmoji: '🥾',
-    members: 14,
-    lastSender: 'Omar',
-    lastMessage: 'Bring at least 2L of water each 💧',
-    time: 'Yesterday',
-    unread: 0,
-  },
-  {
-    id: 'c6',
-    name: 'Priya',
-    lastMessage: 'That board game café was so much fun',
+    name: 'Noor',
+    listingId: 'l6',
+    role: 'buying',
+    lastMessage: 'You: Thanks, got it. Love it!',
     time: 'Mon',
     unread: 0,
   },
   {
-    id: 'c7',
-    name: 'Daniel',
-    lastMessage: 'You: Count me in for Tuesday ⚽',
-    time: 'Sun',
-    unread: 0,
+    id: 'c6',
+    name: 'Hana',
+    listingId: 'l11',
+    role: 'selling',
+    lastMessage: 'Could I collect it tomorrow evening?',
+    time: '3h',
+    unread: 1,
   },
 ];
 
@@ -96,175 +79,117 @@ export type Message = {
 
 export const ME = 'me';
 
+export const QUICK_REPLIES = [
+  'Hi! Is this still available?',
+  'Is the price negotiable?',
+  'When can I pick it up?',
+  'Can you share more photos?',
+];
+
 export const SAMPLE_MESSAGES: Record<string, Message[]> = {
   c1: [
     {
       id: '1',
-      from: 'Aisha',
-      text: 'Hey! Saw we both love coffee 😄',
+      from: ME,
+      text: 'Hi! Is the sofa still available?',
       time: '9:02 AM',
     },
-    {
-      id: '2',
-      from: ME,
-      text: 'Haha yes, it’s a problem. Where do you usually go?',
-      time: '9:05 AM',
-    },
+    { id: '2', from: 'Aisha', text: 'Yes it is!', time: '9:05 AM' },
     {
       id: '3',
-      from: 'Aisha',
-      text: 'Mostly around the Marina, but I want to explore more',
+      from: ME,
+      text: 'Great. Could you do AED 600 if I collect this weekend?',
       time: '9:06 AM',
     },
-    {
-      id: '4',
-      from: ME,
-      text: 'Same, let me know if you find a good one',
-      time: '9:10 AM',
-    },
+    { id: '4', from: 'Aisha', text: 'Deal 🤝', time: '9:50 AM' },
     {
       id: '5',
       from: 'Aisha',
-      text: 'Found a café in Al Quoz with amazing flat whites ☕',
-      time: '9:58 AM',
-    },
-    {
-      id: '6',
-      from: 'Aisha',
-      text: 'Want to try it this weekend?',
+      text: 'Sure, you can pick it up Saturday after 4 PM 🙂',
       time: '9:58 AM',
     },
   ],
   c2: [
-    { id: '1', from: 'Daniel', text: 'Who’s in for Friday?', time: '8:15 AM' },
-    { id: '2', from: ME, text: 'Me! 🙋', time: '8:20 AM' },
-    { id: '3', from: 'Sara', text: 'Count me in', time: '8:31 AM' },
-    { id: '4', from: 'Ali', text: 'I’ll bring extra balls', time: '8:40 AM' },
     {
-      id: '5',
+      id: '1',
+      from: ME,
+      text: 'Hi, any scratches on the screen?',
+      time: '8:15 AM',
+    },
+    {
+      id: '2',
       from: 'Rahul',
-      text: 'Court 3 is booked for 7 PM',
-      time: '9:42 AM',
+      text: 'None at all, it’s had a protector since day one',
+      time: '8:20 AM',
     },
   ],
   c3: [
-    { id: '1', from: 'Rahul', text: 'Good game yesterday!', time: '8:00 AM' },
-    { id: '2', from: ME, text: 'Thanks, you were on fire 🔥', time: '8:12 AM' },
+    {
+      id: '1',
+      from: 'Omar',
+      text: 'Thanks for your interest! It rides really smoothly.',
+      time: '8:00 AM',
+    },
+    { id: '2', from: ME, text: 'Would you take AED 400?', time: '8:12 AM' },
   ],
   c4: [
     {
       id: '1',
-      from: 'Maria',
-      text: 'Are you free on Saturday?',
-      time: '9:30 AM',
+      from: ME,
+      text: 'Hi! Is this still available?',
+      time: '6:30 PM',
     },
     {
       id: '2',
-      from: 'Maria',
-      text: 'Thinking brunch at Kite Beach',
-      time: '9:30 AM',
-    },
-    {
-      id: '3',
-      from: ME,
-      text: 'Brunch on Saturday sounds perfect!',
-      time: '9:41 AM',
+      from: 'Priya',
+      text: 'It’s still available, yes!',
+      time: '6:41 PM',
     },
   ],
   c5: [
     {
       id: '1',
-      from: 'Omar',
-      text: 'Meeting point is the Hatta Wadi Hub car park',
-      time: '7:10 PM',
-    },
-    {
-      id: '2',
       from: 'Noor',
-      text: 'What time should we leave Dubai?',
-      time: '7:22 PM',
+      text: 'Left it with your building’s reception',
+      time: '5:00 PM',
     },
-    {
-      id: '3',
-      from: 'Omar',
-      text: 'Around 4 AM to make sunrise',
-      time: '7:25 PM',
-    },
-    {
-      id: '4',
-      from: 'Omar',
-      text: 'Bring at least 2L of water each 💧',
-      time: '7:26 PM',
-    },
+    { id: '2', from: ME, text: 'Thanks, got it. Love it!', time: '6:04 PM' },
   ],
   c6: [
     {
       id: '1',
-      from: ME,
-      text: 'Thanks for organising last night!',
-      time: '10:15 PM',
+      from: 'Hana',
+      text: 'Hi! Is the desk lamp still available?',
+      time: '11:20 AM',
     },
-    {
-      id: '2',
-      from: 'Priya',
-      text: 'That board game café was so much fun',
-      time: '10:20 PM',
-    },
-  ],
-  c7: [
-    {
-      id: '1',
-      from: 'Daniel',
-      text: 'We need one more for five-a-side on Tuesday',
-      time: '6:00 PM',
-    },
-    { id: '2', from: ME, text: 'Count me in for Tuesday ⚽', time: '6:04 PM' },
-  ],
-  'group-dubai-run-2026': [
-    {
-      id: '1',
-      from: 'Noor',
-      text: 'Hi all! First Dubai Run for me 🙌',
-      time: '7:30 AM',
-    },
-    {
-      id: '2',
-      from: 'Leo',
-      text: 'Welcome! Doing the 10K or 5K?',
-      time: '7:34 AM',
-    },
+    { id: '2', from: ME, text: 'Yes, it is 🙂', time: '11:32 AM' },
     {
       id: '3',
-      from: 'Aisha',
-      text: '5K for me, happy to run together',
-      time: '7:41 AM',
-    },
-    {
-      id: '4',
-      from: 'Omar',
-      text: 'Meeting at the Museum of the Future at 6 AM?',
-      time: '7:45 AM',
+      from: 'Hana',
+      text: 'Could I collect it tomorrow evening?',
+      time: '11:35 AM',
     },
   ],
 };
 
-const WAVE_PREFIX = 'wave-';
+const LISTING_PREFIX = 'listing-';
 
-export function waveChatId(name: string) {
-  return `${WAVE_PREFIX}${name}`;
+/** Chat id used when a buyer starts a new conversation from a listing. */
+export function listingChatId(listingId: string) {
+  const existing = SAMPLE_CHATS.find(c => c.listingId === listingId);
+  return existing ? existing.id : `${LISTING_PREFIX}${listingId}`;
+}
+
+export function isNewListingChat(id: string) {
+  return id.startsWith(LISTING_PREFIX);
+}
+
+export function listingIdFromChat(id: string) {
+  return isNewListingChat(id)
+    ? id.slice(LISTING_PREFIX.length)
+    : SAMPLE_CHATS.find(c => c.id === id)?.listingId;
 }
 
 export function findChat(id: string): Chat | undefined {
-  if (id.startsWith(WAVE_PREFIX)) {
-    const name = id.slice(WAVE_PREFIX.length);
-    return { id, name, lastMessage: '', time: '', unread: 0 };
-  }
-  return (
-    Object.values(CITY_EVENT_CHATS).find(chat => chat.id === id) ??
-    SAMPLE_CHATS.find(chat => chat.id === id)
-  );
-}
-
-export function isWaveChat(id: string) {
-  return id.startsWith(WAVE_PREFIX);
+  return SAMPLE_CHATS.find(chat => chat.id === id);
 }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -22,13 +22,17 @@ export function SplashScreen({ onFinish, duration = 3000 }: Props) {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
       <Image
         source={require('../assets/splash_logo.png')}
         style={styles.logo}
-        accessibilityLabel="Sahbi"
+        accessibilityIgnoresInvertColors
       />
+      <Text style={styles.appName} accessibilityRole="header">
+        Sahbi
+      </Text>
       <Text style={[styles.tagline, { bottom: insets.bottom + 40 }]}>
-        Find your people in the UAE
+        Buy & sell pre-loved items in the UAE
       </Text>
     </View>
   );
@@ -37,13 +41,21 @@ export function SplashScreen({ onFinish, duration = 3000 }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brandNavy,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logo: {
-    width: 240,
-    height: 280,
+    width: 180,
+    height: 180,
+  },
+  appName: {
+    marginTop: 20,
+    fontSize: 40,
+    lineHeight: 52,
+    letterSpacing: 0.5,
+    fontFamily: fonts.extraBold,
+    color: colors.textOnSecondary,
   },
   tagline: {
     position: 'absolute',
@@ -52,6 +64,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 15,
     fontFamily: fonts.medium,
-    color: colors.textOnPrimary,
+    color: colors.textOnSecondary,
   },
 });

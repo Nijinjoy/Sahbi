@@ -28,7 +28,7 @@ export function OtpScreen({ navigation, route }: Props) {
   const [code, setCode] = useState('');
   const [focused, setFocused] = useState(true);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
-  
+
   useEffect(
     () =>
       navigation.addListener('transitionEnd', e => {
@@ -143,7 +143,10 @@ export function OtpScreen({ navigation, route }: Props) {
             disabled={!isComplete}
             onPress={() => {
               updateProfile({ phone });
-              navigation.reset({ index: 0, routes: [{ name: 'ProfileSetup' }] });
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'ProfileSetup' }],
+              });
             }}
           />
         </View>
@@ -204,10 +207,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   boxFilled: {
-    borderColor: colors.secondary,
+    borderColor: colors.brandNavy,
   },
   boxActive: {
-    borderColor: colors.primary,
+    borderColor: colors.brandEmerald,
     borderWidth: 2,
   },
   boxText: {

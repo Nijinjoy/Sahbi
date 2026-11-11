@@ -2,7 +2,8 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import Geolocation, {
   GeolocationError,
 } from '@react-native-community/geolocation';
-import { GOOGLE_MAPS_API_KEY } from '../config/secrets';
+import { GOOGLE_MAPS_API_KEY } from '@env';
+import { updateProfile } from '../state/profile';
 
 export const UAE_CITIES = [
   { name: 'Dubai', latitude: 25.2048, longitude: 55.2708 },
@@ -25,9 +26,16 @@ export type LocationResult =
       city: UaeCity;
       /** Neighbourhood / district from Google, e.g. "Dubai Marina". */
       area: string | null;
+      /** Full street address from Google, without the country. */
+      address: string | null;
       coords: Coordinates;
     }
-  | { status: 'outside'; coords: Coordinates }
+  | {
+      status: 'outside';
+      area: string | null;
+      address: string | null;
+      coords: Coordinates;
+    }
   | { status: 'denied'; canAskAgain: boolean }
   | { status: 'unavailable' };
 
@@ -72,22 +80,22 @@ export function nearestUaeCity(coords: Coordinates): UaeCity | null {
   return best;
 }
 
-async function requestPermission(): Promise<'granted' | 'denied' | 'blocked'> {
+export type PermissionResult = 'granted' | 'denied' | 'blocked';
+
+/** Shows the native location permission prompt (no-op if already decided). */
+export async function requestLocationPermission(): Promise<PermissionResult> {
   if (Platform.OS === 'android') {
-    const result = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-      {
-        title: 'Allow location?',
-        message:
-          'Sahbi uses your approximate location to show your city and find friends near you.',
-        buttonPositive: 'Allow',
-        buttonNegative: 'Not now',
-      },
-    );
-    if (result === PermissionsAndroid.RESULTS.GRANTED) {
+    // Ask for precise + approximate together (required on Android 12+, where
+    // the user can still pick "Approximate" — we accept either).
+    const { ACCESS_FINE_LOCATION: FINE, ACCESS_COARSE_LOCATION: COARSE } =
+      PermissionsAndroid.PERMISSIONS;
+    const results = await PermissionsAndroid.requestMultiple([FINE, COARSE]);
+    const { GRANTED, NEVER_ASK_AGAIN } = PermissionsAndroid.RESULTS;
+    if (results[FINE] === GRANTED || results[COARSE] === GRANTED) {
       return 'granted';
     }
-    return result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN
+    return results[FINE] === NEVER_ASK_AGAIN ||
+      results[COARSE] === NEVER_ASK_AGAIN
       ? 'blocked'
       : 'denied';
   }
@@ -101,7 +109,7 @@ async function requestPermission(): Promise<'granted' | 'denied' | 'blocked'> {
   });
 }
 
-function getPosition(): Promise<Coordinates> {
+function getPositionOnce(highAccuracy: boolean): Promise<Coordinates> {
   return new Promise((resolve, reject) => {
     Geolocation.getCurrentPosition(
       position =>
@@ -110,9 +118,26 @@ function getPosition(): Promise<Coordinates> {
           longitude: position.coords.longitude,
         }),
       reject,
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 5 * 60 * 1000 },
+      { enableHighAccuracy: highAccuracy, timeout: 15000, maximumAge: 60 * 1000 },
     );
   });
+}
+
+/**
+ * GPS-level fix first; if that times out (common indoors), fall back to a
+ * Wi-Fi/cell fix so we still get a location.
+ */
+async function getPosition(): Promise<Coordinates> {
+  try {
+    return await getPositionOnce(true);
+  } catch (error) {
+    const geoError = error as GeolocationError;
+    if (geoError?.code === geoError?.PERMISSION_DENIED) {
+      throw error;
+    }
+    console.warn('[location] precise fix failed, retrying', geoError?.message);
+    return getPositionOnce(false);
+  }
 }
 
 type GeocodeComponent = {
@@ -124,13 +149,18 @@ type GeocodeComponent = {
 type GeocodeResponse = {
   status: string;
   error_message?: string;
-  results: { address_components: GeocodeComponent[] }[];
+  results: {
+    formatted_address: string;
+    types: string[];
+    address_components: GeocodeComponent[];
+  }[];
 };
 
 type ReverseGeocode = {
   inUae: boolean;
   city: UaeCity | null;
   area: string | null;
+  address: string | null;
 };
 
 const normalize = (value: string) =>
@@ -179,23 +209,42 @@ async function reverseGeocode(coords: Coordinates): Promise<ReverseGeocode> {
       find('sublocality')?.long_name ??
       null;
 
-    return { inUae, city, area: area && area !== city ? area : null };
+    // Results come most-specific first; skip bare plus-code-only results.
+    const best =
+      data.results.find(r => !r.types.includes('plus_code')) ?? data.results[0];
+    const address = best.formatted_address
+      .replace(/\s*[-,]\s*United Arab Emirates$/i, '')
+      // Drop a leading plus code segment: "34JR+647 - Braih St - …".
+      .replace(/^[23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,3}\s*[-,]\s*/i, '')
+      .trim();
+
+    return {
+      inUae,
+      city,
+      area: area && area !== city ? area : null,
+      address: address || null,
+    };
   } finally {
     clearTimeout(timer);
   }
 }
 
 export async function fetchCurrentCity(): Promise<LocationResult> {
-  const permission = await requestPermission();
+  const permission = await requestLocationPermission();
   if (permission !== 'granted') {
     return { status: 'denied', canAskAgain: permission === 'denied' };
   }
+  return locateCity();
+}
 
+/** Gets the current city. Assumes location permission is already granted. */
+export async function locateCity(): Promise<LocationResult> {
   let coords: Coordinates;
   try {
     coords = await getPosition();
   } catch (error) {
     const geoError = error as GeolocationError;
+    console.warn('[location] could not get position', geoError?.message);
     if (geoError?.code === geoError?.PERMISSION_DENIED) {
       return { status: 'denied', canAskAgain: false };
     }
@@ -205,19 +254,55 @@ export async function fetchCurrentCity(): Promise<LocationResult> {
   try {
     const place = await reverseGeocode(coords);
     if (!place.inUae) {
-      return { status: 'outside', coords };
+      return {
+        status: 'outside',
+        area: place.area,
+        address: place.address,
+        coords,
+      };
     }
     const city = place.city ?? nearestUaeCity(coords);
     if (city) {
-      return { status: 'ok', city, area: place.area, coords };
+      return {
+        status: 'ok',
+        city,
+        area: place.area,
+        address: place.address,
+        coords,
+      };
     }
   } catch (error) {
     // Network/API problem: fall back to the offline nearest-city lookup.
-    console.warn(error);
+    console.warn('[location] reverse geocoding failed', error);
   }
 
   const city = nearestUaeCity(coords);
   return city
-    ? { status: 'ok', city, area: null, coords }
-    : { status: 'outside', coords };
+    ? { status: 'ok', city, area: null, address: null, coords }
+    : { status: 'outside', area: null, address: null, coords };
+}
+
+/**
+ * Looks up the current location and saves it to the profile. Outside the UAE
+ * the street address is still saved, just without a UAE city.
+ */
+export async function refreshProfileLocation(): Promise<LocationResult> {
+  const result = await locateCity();
+  console.log('[location]', result.status);
+  if (result.status === 'ok') {
+    updateProfile({
+      city: result.city,
+      area: result.area,
+      address: result.address,
+      coords: result.coords,
+    });
+  } else if (result.status === 'outside') {
+    updateProfile({
+      city: null,
+      area: result.area,
+      address: result.address,
+      coords: result.coords,
+    });
+  }
+  return result;
 }

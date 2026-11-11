@@ -6,7 +6,11 @@ export type Profile = {
   bio: string | null;
   gender: string | null;
   city: string | null;
-  interests: string[];
+  /** Neighbourhood from the device location, e.g. "Dubai Marina". */
+  area: string | null;
+  /** Full street address from Google Geocoding. */
+  address: string | null;
+  coords: { latitude: number; longitude: number } | null;
 };
 
 const EMPTY: Profile = {
@@ -15,7 +19,9 @@ const EMPTY: Profile = {
   bio: null,
   gender: null,
   city: null,
-  interests: [],
+  area: null,
+  address: null,
+  coords: null,
 };
 
 let profile: Profile = EMPTY;

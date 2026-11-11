@@ -16,16 +16,16 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="SplashLogo" translatesAutoresizingMaskIntoConstraints="NO" id="Lgo-Sp-001">
-                                <rect key="frame" x="67.5" y="193.5" width="240" height="280"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="LaunchRing" translatesAutoresizingMaskIntoConstraints="NO" id="Lgo-Sp-001">
+                                <rect key="frame" x="97.5" y="243.5" width="180" height="180"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="240" id="Lgo-Wd-001"/>
-                                    <constraint firstAttribute="height" constant="280" id="Lgo-Ht-001"/>
+                                    <constraint firstAttribute="width" constant="180" id="Lgo-Wd-001"/>
+                                    <constraint firstAttribute="height" constant="180" id="Lgo-Ht-001"/>
                                 </constraints>
                             </imageView>
                         </subviews>
-                        <!-- Brand gold #F2B84B -->
-                        <color key="backgroundColor" red="0.94901960784313721" green="0.72156862745098038" blue="0.29411764705882354" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <!-- Brand navy #0B2340 -->
+                        <color key="backgroundColor" red="0.043137254901960784" green="0.13725490196078433" blue="0.25098039215686274" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="Lgo-Sp-001" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Lgo-Cx-001"/>
                             <constraint firstItem="Lgo-Sp-001" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="Lgo-Cy-001"/>
@@ -39,6 +39,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="SplashLogo" width="240" height="280"/>
+        <image name="LaunchRing" width="180" height="180"/>
     </resources>
 </document>

@@ -34,7 +34,7 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Sahbi uses your location to show which city you live in and to find friends near you.</string>
+	<string>Sahbi uses your location to show which city you live in and to find items for sale near you.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>

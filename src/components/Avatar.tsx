@@ -5,7 +5,7 @@ import { fonts } from '../theme/fonts';
 const PALETTE = [
   { bg: colors.primary, fg: colors.textOnPrimary },
   { bg: colors.accentTeal, fg: colors.textOnSecondary },
-  { bg: colors.accentCoral, fg: colors.textOnSecondary },
+  { bg: colors.brandTurquoise, fg: colors.secondary },
   { bg: colors.secondary, fg: colors.textOnSecondary },
 ];
 

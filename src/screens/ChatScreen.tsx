@@ -3,6 +3,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -15,18 +16,23 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Avatar } from '../components/Avatar';
 import { BackButton } from '../components/BackButton';
-import { GroupAvatar } from '../components/GroupAvatar';
+import { ItemImage } from '../components/ItemImage';
+import { formatPrice } from '../data/listings';
 import {
   findChat,
-  isWaveChat,
+  isNewListingChat,
+  listingIdFromChat,
   ME,
   Message,
+  QUICK_REPLIES,
   SAMPLE_MESSAGES,
 } from '../data/sampleChats';
 import { RootStackParamList } from '../navigation/types';
+import { useListings } from '../state/listings';
 import { markChatRead } from '../state/readChats';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
+import { Price } from '../components/Price';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -42,27 +48,15 @@ function nowLabel() {
 
 function Bubble({
   message,
-  isGroup,
-  showName,
   showTime,
 }: {
   message: Message;
-  isGroup: boolean;
-  showName: boolean;
   showTime: boolean;
 }) {
   const mine = message.from === ME;
   return (
     <View style={[styles.bubbleRow, mine ? styles.rowMine : styles.rowTheirs]}>
-      {isGroup && !mine ? (
-        <View style={styles.bubbleAvatarSlot}>
-          {showTime ? <Avatar name={message.from} size={28} /> : null}
-        </View>
-      ) : null}
       <View style={[styles.bubbleColumn, mine && styles.bubbleColumnMine]}>
-        {showName ? (
-          <Text style={styles.senderName}>{message.from}</Text>
-        ) : null}
         <View
           style={[
             styles.bubble,
@@ -87,9 +81,14 @@ function Bubble({
 export function ChatScreen({ navigation, route }: Props) {
   const { chatId } = route.params;
   const insets = useSafeAreaInsets();
+  const listings = useListings();
+  const isNew = isNewListingChat(chatId);
+  const listingId = listingIdFromChat(chatId);
+  const listing = listings.find(l => l.id === listingId);
   const chat = useMemo(() => findChat(chatId), [chatId]);
-  const wave = isWaveChat(chatId);
-  const isGroup = Boolean(chat?.groupEmoji);
+
+  const name = chat?.name ?? listing?.seller;
+  const role = chat?.role ?? 'buying';
 
   const [messages, setMessages] = useState<Message[]>(
     () => SAMPLE_MESSAGES[chatId] ?? [],
@@ -112,7 +111,7 @@ export function ChatScreen({ navigation, route }: Props) {
     setDraft('');
   };
 
-  if (!chat) {
+  if (!name) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -125,42 +124,72 @@ export function ChatScreen({ navigation, route }: Props) {
     );
   }
 
-  const status = isGroup
-    ? `${chat.members} members`
-    : chat.typing
+  const status = chat?.typing
     ? 'typing…'
-    : chat.online
+    : chat?.online
     ? 'Online'
-    : wave
-    ? 'Waved at you'
-    : 'Last seen recently';
+    : role === 'selling'
+    ? 'Interested buyer'
+    : 'Seller';
 
   const reversed = [...messages].reverse();
   const canSend = draft.trim().length > 0;
+  const showQuickReplies = role === 'buying' && messages.length === 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <BackButton variant="arrow" onPress={() => navigation.goBack()} />
-        {isGroup ? (
-          <GroupAvatar emoji={chat.groupEmoji as string} size={42} />
-        ) : (
-          <Avatar name={chat.name} size={42} />
-        )}
+        <Avatar name={name} size={42} />
         <View style={styles.headerText}>
           <Text style={styles.headerName} numberOfLines={1}>
-            {chat.name}
+            {name}
           </Text>
           <Text
             style={[
               styles.headerStatus,
-              (chat.online || chat.typing) && styles.headerStatusActive,
+              (chat?.online || chat?.typing) && styles.headerStatusActive,
             ]}
           >
             {status}
           </Text>
         </View>
       </View>
+
+      {listing ? (
+        <Pressable
+          onPress={() =>
+            navigation.navigate('ListingDetail', { listingId: listing.id })
+          }
+          accessibilityRole="button"
+          accessibilityLabel={`View item: ${listing.title}, ${formatPrice(
+            listing.price,
+          )}`}
+          style={({ pressed }) => [
+            styles.itemBanner,
+            pressed && styles.itemBannerPressed,
+          ]}
+        >
+          <ItemImage
+            id={listing.id}
+            emoji={listing.emoji}
+            photo={listing.photo}
+            size={44}
+            radius={12}
+          />
+          <View style={styles.headerText}>
+            <Text style={styles.itemTitle} numberOfLines={1}>
+              {listing.title}
+            </Text>
+            <Price
+              amount={listing.price}
+              style={styles.itemPrice}
+              suffix={listing.sold ? ' · Sold' : undefined}
+            />
+          </View>
+          <Text style={styles.itemChevron}>›</Text>
+        </Pressable>
+      ) : null}
 
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <FlatList
@@ -169,20 +198,16 @@ export function ChatScreen({ navigation, route }: Props) {
           keyExtractor={item => item.id}
           renderItem={({ item, index }) => {
             const newer = reversed[index - 1];
-            const older = reversed[index + 1];
             return (
-              <Bubble
-                message={item}
-                isGroup={isGroup}
-                showName={isGroup && item.from !== ME && older?.from !== item.from}
-                showTime={newer?.from !== item.from}
-              />
+              <Bubble message={item} showTime={newer?.from !== item.from} />
             );
           }}
           ListHeaderComponent={
-            chat.typing ? (
+            chat?.typing ? (
               <View style={[styles.bubbleRow, styles.rowTheirs]}>
-                <View style={[styles.bubble, styles.bubbleTheirs, styles.typing]}>
+                <View
+                  style={[styles.bubble, styles.bubbleTheirs, styles.typing]}
+                >
                   <Text style={styles.typingText}>•••</Text>
                 </View>
               </View>
@@ -190,27 +215,14 @@ export function ChatScreen({ navigation, route }: Props) {
           }
           ListFooterComponent={
             <View style={styles.thread}>
-              {wave ? (
-                <View style={styles.waveCard}>
-                  <Avatar name={chat.name} size={64} />
-                  <Text style={styles.waveTitle}>
-                    {chat.name} waved at you 👋
+              {isNew && messages.length === 0 ? (
+                <View style={styles.introCard}>
+                  <Avatar name={name} size={64} />
+                  <Text style={styles.introTitle}>Message {name}</Text>
+                  <Text style={styles.introText}>
+                    Ask about the item, agree on a price and pick a time to
+                    meet.
                   </Text>
-                  <Text style={styles.waveText}>
-                    Say hi back to start the conversation.
-                  </Text>
-                  {messages.length === 0 ? (
-                    <Pressable
-                      onPress={() => send('Hi! 👋')}
-                      accessibilityRole="button"
-                      style={({ pressed }) => [
-                        styles.waveButton,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={styles.waveButtonText}>Wave back 👋</Text>
-                    </Pressable>
-                  ) : null}
                 </View>
               ) : (
                 <Text style={styles.dayPill}>Today</Text>
@@ -222,6 +234,30 @@ export function ChatScreen({ navigation, route }: Props) {
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         />
+
+        {showQuickReplies ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.quickRow}
+            style={styles.quickScroll}
+          >
+            {QUICK_REPLIES.map(text => (
+              <Pressable
+                key={text}
+                onPress={() => send(text)}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.quickChip,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.quickText}>{text}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
 
         <View
           style={[
@@ -236,7 +272,7 @@ export function ChatScreen({ navigation, route }: Props) {
             placeholderTextColor={colors.textMuted}
             multiline
             maxLength={MAX_LENGTH}
-            accessibilityLabel={`Message ${chat.name}`}
+            accessibilityLabel={`Message ${name}`}
             style={styles.input}
           />
           <Pressable
@@ -314,34 +350,73 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     backgroundColor: colors.surface,
   },
-  waveCard: {
+  itemBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: colors.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  itemBannerPressed: {
+    backgroundColor: colors.primarySoft,
+  },
+  itemTitle: {
+    fontSize: 15,
+    fontFamily: fonts.semiBold,
+    color: colors.secondary,
+  },
+  itemPrice: {
+    fontSize: 14,
+    fontFamily: fonts.extraBold,
+    color: colors.secondary,
+  },
+  itemChevron: {
+    fontSize: 28,
+    color: colors.textMuted,
+  },
+  introCard: {
     alignItems: 'center',
     gap: 6,
     paddingVertical: 24,
+    paddingHorizontal: 24,
   },
-  waveTitle: {
+  introTitle: {
     marginTop: 6,
     fontSize: 18,
     fontFamily: fonts.bold,
     color: colors.secondary,
   },
-  waveText: {
+  introText: {
     fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
     fontFamily: fonts.regular,
     color: colors.textMuted,
   },
-  waveButton: {
-    marginTop: 10,
-    height: 44,
-    paddingHorizontal: 20,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
+  quickScroll: {
+    flexGrow: 0,
+  },
+  quickRow: {
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+  },
+  quickChip: {
+    height: 36,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
     justifyContent: 'center',
   },
-  waveButtonText: {
-    fontSize: 15,
-    fontFamily: fonts.bold,
-    color: colors.textOnPrimary,
+  quickText: {
+    fontSize: 14,
+    fontFamily: fonts.semiBold,
+    color: colors.secondary,
   },
   bubbleRow: {
     flexDirection: 'row',
@@ -354,25 +429,12 @@ const styles = StyleSheet.create({
   rowTheirs: {
     justifyContent: 'flex-start',
   },
-  bubbleAvatarSlot: {
-    width: 28,
-    marginRight: 8,
-    marginBottom: 18,
-  },
   bubbleColumn: {
     maxWidth: '78%',
     alignItems: 'flex-start',
   },
   bubbleColumnMine: {
     alignItems: 'flex-end',
-  },
-  senderName: {
-    marginTop: 8,
-    marginBottom: 2,
-    marginLeft: 4,
-    fontSize: 12,
-    fontFamily: fonts.bold,
-    color: colors.accentTeal,
   },
   bubble: {
     paddingHorizontal: 14,
@@ -452,7 +514,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -465,7 +527,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     borderLeftWidth: 2.5,
     borderTopWidth: 2.5,
-    borderColor: colors.secondary,
+    borderColor: colors.textOnSecondary,
     transform: [{ rotate: '45deg' }],
   },
   sendArrowOff: {

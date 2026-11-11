@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import {
   Alert,
+  Image,
+  ImageSourcePropType,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,69 +14,156 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Avatar } from '../../components/Avatar';
-import {
-  CITY_EVENTS,
-  daysUntil,
-  eventDateLabel,
-} from '../../data/cityEvents';
-import { SAMPLE_CHATS, SAMPLE_WAVES } from '../../data/sampleChats';
 import { RootStackParamList } from '../../navigation/types';
-import { useCityEventsGoing } from '../../state/cityEventsGoing';
+import { useListings, useSaved } from '../../state/listings';
 import { clearProfile, useProfile } from '../../state/profile';
+import {
+  refreshProfileLocation,
+  requestLocationPermission,
+} from '../../utils/location';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 import packageJson from '../../../package.json';
 
-function SettingRow({
-  label,
-  value,
-  toggle,
-  onToggle,
-  last,
-}: {
+const ICONS = {
+  tag: require('../../assets/icons/profile/tag.png'),
+  heart: require('../../assets/icons/profile/heart.png'),
+  bell: require('../../assets/icons/profile/bell.png'),
+  priceDrop: require('../../assets/icons/profile/pricedrop.png'),
+  phone: require('../../assets/icons/profile/phone.png'),
+  shield: require('../../assets/icons/profile/shield.png'),
+  logout: require('../../assets/icons/profile/logout.png'),
+  chevron: require('../../assets/icons/profile/chevron.png'),
+};
+
+const SAFETY_TIPS =
+  '• Meet in a public place, or a building lobby with a guard.\n' +
+  '• Check the item works before you pay.\n' +
+  '• Never pay or send a deposit before seeing the item.\n' +
+  '• Keep the conversation in Sahbi chat.';
+
+type RowProps = {
+  icon: ImageSourcePropType;
   label: string;
   value?: string;
+  onPress?: () => void;
   toggle?: boolean;
   onToggle?: (next: boolean) => void;
+  danger?: boolean;
   last?: boolean;
-}) {
-  return (
-    <View style={[styles.settingRow, !last && styles.settingRowDivider]}>
-      <Text style={styles.settingLabel}>{label}</Text>
-      {toggle !== undefined && onToggle ? (
+};
+
+function Row({
+  icon,
+  label,
+  value,
+  onPress,
+  toggle,
+  onToggle,
+  danger,
+  last,
+}: RowProps) {
+  const hasToggle = toggle !== undefined && onToggle !== undefined;
+  const content = (
+    <>
+      <Image
+        source={icon}
+        style={[styles.rowIcon, danger && styles.rowIconDanger]}
+      />
+      <Text style={[styles.rowLabel, danger && styles.rowLabelDanger]}>
+        {label}
+      </Text>
+      {value ? <Text style={styles.rowValue}>{value}</Text> : null}
+      {hasToggle ? (
         <Switch
           value={toggle}
           onValueChange={onToggle}
-          trackColor={{ false: colors.border, true: colors.primary }}
+          trackColor={{ false: colors.border, true: colors.secondary }}
           thumbColor={colors.background}
           ios_backgroundColor={colors.border}
           accessibilityLabel={label}
         />
-      ) : (
-        <Text style={styles.settingValue}>{value}</Text>
-      )}
+      ) : onPress && !danger ? (
+        <Image source={ICONS.chevron} style={styles.chevron} />
+      ) : null}
+    </>
+  );
+
+  const rowStyle = [styles.row, !last && styles.rowDivider];
+
+  if (!onPress) {
+    return <View style={rowStyle}>{content}</View>;
+  }
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={value ? `${label}, ${value}` : label}
+      style={({ pressed }) => [...rowStyle, pressed && styles.rowPressed]}
+    >
+      {content}
+    </Pressable>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.group}>{children}</View>
     </View>
   );
 }
 
 export function ProfileScreen() {
   const profile = useProfile();
-  const goingIds = useCityEventsGoing();
+  const listings = useListings();
+  const saved = useSaved();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const [notifications, setNotifications] = useState(true);
-  const [showDistance, setShowDistance] = useState(true);
+  const [priceDrops, setPriceDrops] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+  const [locating, setLocating] = useState(false);
+
+  const updateLocation = async () => {
+    if (locating) {
+      return;
+    }
+    setLocating(true);
+    try {
+      const permission = await requestLocationPermission();
+      if (permission !== 'granted') {
+        Alert.alert(
+          'Location is off',
+          'Allow location access for Sahbi in Settings to show where you are.',
+        );
+        return;
+      }
+      const result = await refreshProfileLocation();
+      if (result.status === 'unavailable') {
+        Alert.alert(
+          'Couldn’t find you',
+          'Make sure location services are on, then try again.',
+        );
+      }
+    } catch (error) {
+      console.warn(error);
+    } finally {
+      setLocating(false);
+    }
+  };
 
   const name = profile.name ?? 'Your name';
-  const goingEvents = CITY_EVENTS.filter(
-    event => goingIds.has(event.id) && daysUntil(event.date) >= 0,
-  );
+  const mine = listings.filter(l => l.mine);
+  const active = mine.filter(l => !l.sold).length;
+  const sold = mine.length - active;
 
   const stats = [
-    { label: 'Events', value: goingEvents.length },
-    { label: 'Waves', value: SAMPLE_WAVES.length },
-    { label: 'Chats', value: SAMPLE_CHATS.length },
+    { label: 'Listed', value: active, view: 'selling' as const },
+    { label: 'Sold', value: sold, view: 'selling' as const },
+    { label: 'Wishlist', value: saved.size, view: 'saved' as const },
   ];
 
   const logOut = () =>
@@ -92,7 +181,7 @@ export function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
+      <View style={[styles.header, scrolled && styles.headerScrolled]}>
         <Text style={styles.title} accessibilityRole="header">
           Profile
         </Text>
@@ -101,113 +190,98 @@ export function ProfileScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onScroll={event => setScrolled(event.nativeEvent.contentOffset.y > 4)}
+        scrollEventThrottle={32}
       >
-        <View style={styles.card}>
-          <View style={styles.cardBand} />
-          <View style={styles.avatarRing}>
-            <Avatar name={name} size={92} />
-          </View>
-          <Text style={styles.name}>{name}</Text>
-          <View style={styles.cityPill}>
-            <Text style={styles.cityText}>
-              📍 {profile.city ? `${profile.city}, UAE` : 'City not set'}
+        <View style={styles.identity}>
+          <Avatar name={name} size={96} />
+          <Text style={styles.name} numberOfLines={1}>
+            {name}
+          </Text>
+          {profile.phone ? (
+            <View style={styles.metaLine}>
+              <Image source={ICONS.phone} style={styles.phoneIcon} />
+              <Text style={styles.meta}>{profile.phone}</Text>
+            </View>
+          ) : null}
+          <Pressable
+            onPress={updateLocation}
+            disabled={locating}
+            accessibilityRole="button"
+            accessibilityHint="Updates your location"
+            hitSlop={8}
+          >
+            <Text style={[styles.meta, styles.address]} numberOfLines={2}>
+              📍{' '}
+              {locating
+                ? 'Finding your location…'
+                : profile.address ??
+                  (profile.city
+                    ? [profile.area, profile.city].filter(Boolean).join(', ')
+                    : 'Tap to set your location')}
             </Text>
-          </View>
-          {profile.bio ? (
-            <Text style={styles.bio}>{profile.bio}</Text>
-          ) : (
-            <Text style={[styles.bio, styles.muted]}>No bio yet.</Text>
-          )}
-
-          <View style={styles.stats}>
-            {stats.map((stat, i) => (
-              <View
-                key={stat.label}
-                style={[styles.stat, i > 0 && styles.statDivider]}
-                accessible
-                accessibilityLabel={`${stat.value} ${stat.label}`}
-              >
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
-              </View>
-            ))}
-          </View>
+          </Pressable>
         </View>
 
-        <Text style={styles.sectionTitle}>Interests</Text>
-        {profile.interests.length > 0 ? (
-          <View style={styles.chipWrap}>
-            {profile.interests.map(item => (
-              <View key={item} style={styles.chip}>
-                <Text style={styles.chipText}>{item}</Text>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <Text style={styles.emptyText}>No interests added yet.</Text>
-        )}
+        <View style={styles.stats}>
+          {stats.map(stat => (
+            <Pressable
+              key={stat.label}
+              onPress={() => navigation.navigate('MyItems', { view: stat.view })}
+              accessibilityRole="button"
+              accessibilityLabel={`${stat.value} ${stat.label}`}
+              style={({ pressed }) => [styles.stat, pressed && styles.rowPressed]}
+            >
+              <Text style={styles.statValue}>{stat.value}</Text>
+              <Text style={styles.statLabel}>{stat.label}</Text>
+            </Pressable>
+          ))}
+        </View>
 
-        <Text style={styles.sectionTitle}>Going to</Text>
-        {goingEvents.length > 0 ? (
-          <View style={styles.group}>
-            {goingEvents.map((event, i) => {
-              const days = daysUntil(event.date);
-              return (
-                <View
-                  key={event.id}
-                  style={[
-                    styles.eventRow,
-                    i < goingEvents.length - 1 && styles.settingRowDivider,
-                  ]}
-                >
-                  <Text style={styles.eventEmoji}>{event.emoji}</Text>
-                  <View style={styles.eventBody}>
-                    <Text style={styles.eventTitle}>{event.title}</Text>
-                    <Text style={styles.eventMeta}>
-                      {eventDateLabel(event)}
-                    </Text>
-                  </View>
-                  <View style={styles.countdown}>
-                    <Text style={styles.countdownText}>
-                      {days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `${days}d`}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        ) : (
-          <Text style={styles.emptyText}>
-            Tap “I’m going” on a city event to see it here.
-          </Text>
-        )}
+        <Section title="Buying & selling">
+          <Row
+            icon={ICONS.tag}
+            label="My listings"
+            value={String(mine.length)}
+            onPress={() => navigation.navigate('MyItems', { view: 'selling' })}
+          />
+          <Row
+            icon={ICONS.heart}
+            label="Wishlist"
+            value={String(saved.size)}
+            onPress={() => navigation.navigate('MyItems', { view: 'saved' })}
+            last
+          />
+        </Section>
 
-        <Text style={styles.sectionTitle}>Settings</Text>
-        <View style={styles.group}>
-          <SettingRow label="Phone" value={profile.phone ?? 'Not set'} />
-          <SettingRow
+        <Section title="Settings">
+          <Row
+            icon={ICONS.bell}
             label="Notifications"
             toggle={notifications}
             onToggle={setNotifications}
           />
-          <SettingRow
-            label="Show my distance"
-            toggle={showDistance}
-            onToggle={setShowDistance}
+          <Row
+            icon={ICONS.priceDrop}
+            label="Price drop alerts"
+            toggle={priceDrops}
+            onToggle={setPriceDrops}
             last
           />
-        </View>
+        </Section>
 
-        <Pressable
-          onPress={logOut}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.logout,
-            pressed && styles.logoutPressed,
-          ]}
-        >
-          <Text style={styles.logoutText}>Log out</Text>
-        </Pressable>
+        <Section title="Help">
+          <Row
+            icon={ICONS.shield}
+            label="Safety tips"
+            onPress={() => Alert.alert('Stay safe on Sahbi', SAFETY_TIPS)}
+            last
+          />
+        </Section>
+
+        <View style={[styles.group, styles.logoutGroup]}>
+          <Row icon={ICONS.logout} label="Log out" onPress={logOut} danger last />
+        </View>
 
         <Text style={styles.version}>Sahbi v{packageJson.version}</Text>
       </ScrollView>
@@ -215,15 +289,23 @@ export function ProfileScreen() {
   );
 }
 
+const GUTTER = 24;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: 24,
+    paddingHorizontal: GUTTER,
     paddingTop: 16,
     paddingBottom: 8,
+    backgroundColor: colors.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'transparent',
+  },
+  headerScrolled: {
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: 32,
@@ -232,80 +314,57 @@ const styles = StyleSheet.create({
     color: colors.secondary,
   },
   content: {
-    paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingHorizontal: GUTTER,
+    paddingTop: 12,
     paddingBottom: 32,
   },
-  card: {
+  identity: {
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-    overflow: 'hidden',
-  },
-  cardBand: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 64,
-    backgroundColor: colors.primary,
-  },
-  avatarRing: {
-    marginTop: 16,
-    padding: 4,
-    borderRadius: 52,
-    backgroundColor: colors.background,
+    paddingTop: 8,
   },
   name: {
-    marginTop: 10,
+    marginTop: 12,
     fontSize: 24,
     lineHeight: 30,
     fontFamily: fonts.extraBold,
     color: colors.secondary,
     textAlign: 'center',
   },
-  cityPill: {
-    marginTop: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    borderRadius: 12,
-    backgroundColor: colors.primarySoft,
-  },
-  cityText: {
-    fontSize: 13,
-    fontFamily: fonts.semiBold,
-    color: colors.secondary,
-  },
-  bio: {
-    marginTop: 12,
-    fontSize: 15,
-    lineHeight: 22,
+  meta: {
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: fonts.regular,
-    color: colors.secondary,
+    color: colors.textMuted,
+  },
+  metaLine: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: 8,
+  },
+  address: {
+    marginTop: 4,
     textAlign: 'center',
   },
-  muted: {
-    color: colors.textMuted,
+  phoneIcon: {
+    width: 14,
+    height: 14,
+    tintColor: colors.textMuted,
   },
   stats: {
     flexDirection: 'row',
-    alignSelf: 'stretch',
-    marginTop: 18,
-    paddingTop: 14,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    gap: 10,
+    marginTop: 20,
   },
   stat: {
     flex: 1,
     alignItems: 'center',
-  },
-  statDivider: {
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    borderLeftColor: colors.border,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   statValue: {
     fontSize: 22,
@@ -314,119 +373,71 @@ const styles = StyleSheet.create({
     color: colors.secondary,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: fonts.semiBold,
     color: colors.textMuted,
   },
+  section: {
+    marginTop: 24,
+  },
   sectionTitle: {
-    marginTop: 28,
-    marginBottom: 12,
-    fontSize: 18,
+    marginBottom: 8,
+    fontSize: 13,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     fontFamily: fonts.bold,
-    color: colors.secondary,
-  },
-  chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primarySoft,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    justifyContent: 'center',
-  },
-  chipText: {
-    fontSize: 14,
-    fontFamily: fonts.semiBold,
-    color: colors.secondary,
-  },
-  emptyText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
   group: {
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  logoutGroup: {
+    marginTop: 24,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 54,
     paddingHorizontal: 16,
   },
-  eventRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-  },
-  eventEmoji: {
-    fontSize: 26,
-  },
-  eventBody: {
-    flex: 1,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontFamily: fonts.bold,
-    color: colors.secondary,
-  },
-  eventMeta: {
-    fontSize: 13,
-    fontFamily: fonts.regular,
-    color: colors.textMuted,
-  },
-  countdown: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-    backgroundColor: colors.primary,
-  },
-  countdownText: {
-    fontSize: 12,
-    fontFamily: fonts.bold,
-    color: colors.textOnPrimary,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 54,
-    gap: 12,
-  },
-  settingRowDivider: {
+  rowDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  settingLabel: {
+  rowPressed: {
+    backgroundColor: colors.surface,
+  },
+  rowIcon: {
+    width: 22,
+    height: 22,
+    tintColor: colors.secondary,
+  },
+  rowIconDanger: {
+    tintColor: colors.error,
+  },
+  rowLabel: {
+    flex: 1,
     fontSize: 16,
     fontFamily: fonts.medium,
     color: colors.secondary,
   },
-  settingValue: {
-    flexShrink: 1,
+  rowLabelDanger: {
+    fontFamily: fonts.bold,
+    color: colors.error,
+  },
+  rowValue: {
     fontSize: 15,
     fontFamily: fonts.regular,
     color: colors.textMuted,
   },
-  logout: {
-    marginTop: 24,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1.5,
-    borderColor: colors.error,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoutPressed: {
-    backgroundColor: colors.surface,
-  },
-  logoutText: {
-    fontSize: 16,
-    fontFamily: fonts.bold,
-    color: colors.error,
+  chevron: {
+    width: 18,
+    height: 18,
+    tintColor: colors.textMuted,
   },
   version: {
     marginTop: 16,

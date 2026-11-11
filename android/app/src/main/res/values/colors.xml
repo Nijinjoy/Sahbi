@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand gold #F2B84B -->
-    <color name="splash_background">#F2B84B</color>
+    <!-- Brand navy #0B2340 (matches the app icon) -->
+    <color name="splash_background">#0B2340</color>
 </resources>

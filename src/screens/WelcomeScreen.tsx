@@ -3,6 +3,8 @@ import {
   Animated,
   Easing,
   Image,
+  Pressable,
+  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -10,200 +12,140 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
-import { PrimaryButton } from '../components/PrimaryButton';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 
-const CHIPS = [
-  {
-    label: '☕  Coffee',
-    left: '6%',
-    top: '22%',
-    bg: colors.primary,
-    fg: colors.secondary,
-  },
-  {
-    label: '⚽  Football',
-    left: '58%',
-    top: '14%',
-    bg: colors.accentCoral,
-    fg: '#FFFFFF',
-  },
-  {
-    label: '🎨  Art walks',
-    left: '62%',
-    top: '66%',
-    bg: '#FFFFFF',
-    fg: colors.secondary,
-  },
-  {
-    label: '🌄  Weekend trips',
-    left: '4%',
-    top: '72%',
-    bg: colors.accentTeal,
-    fg: '#FFFFFF',
-  },
-] as const;
-
-const DOTS = [
-  { left: '24%', top: '40%', size: 12, color: colors.primary },
-  { left: '78%', top: '42%', size: 10, color: '#FFFFFF' },
-  { left: '44%', top: '84%', size: 14, color: colors.accentCoral },
-  { left: '36%', top: '10%', size: 8, color: '#FFFFFF' },
-] as const;
-
-const RING_SIZES = [140, 230, 320];
+const RING_SIZE = 260;
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Welcome'>;
 
 export function WelcomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const pulse = useRef(new Animated.Value(0)).current;
-  const float = useRef(new Animated.Value(0)).current;
+  const spin = useRef(new Animated.Value(0)).current;
+  const breathe = useRef(new Animated.Value(0)).current;
+  const enter = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const pulseLoop = Animated.loop(
-      Animated.timing(pulse, {
+    const spinLoop = Animated.loop(
+      Animated.timing(spin, {
         toValue: 1,
-        duration: 2600,
-        easing: Easing.out(Easing.ease),
+        duration: 16000,
+        easing: Easing.linear,
         useNativeDriver: true,
       }),
     );
-    const floatLoop = Animated.loop(
+    const breatheLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(float, {
+        Animated.timing(breathe, {
           toValue: 1,
-          duration: 2200,
+          duration: 2400,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
-        Animated.timing(float, {
+        Animated.timing(breathe, {
           toValue: 0,
-          duration: 2200,
+          duration: 2400,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ]),
     );
-    pulseLoop.start();
-    floatLoop.start();
+    spinLoop.start();
+    breatheLoop.start();
+    Animated.timing(enter, {
+      toValue: 1,
+      duration: 700,
+      delay: 200,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
     return () => {
-      pulseLoop.stop();
-      floatLoop.stop();
+      spinLoop.stop();
+      breatheLoop.stop();
     };
-  }, [pulse, float]);
+  }, [spin, breathe, enter]);
 
-  const pulseScale = pulse.interpolate({
+  const rotate = spin.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.6, 2.4],
+    outputRange: ['0deg', '360deg'],
   });
-  const pulseOpacity = pulse.interpolate({
+  const leafScale = breathe.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.35, 0],
+    outputRange: [1, 1.06],
   });
-  const floatY = float.interpolate({
+  const glowOpacity = breathe.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -8],
+    outputRange: [0.16, 0.28],
   });
-  const floatYReverse = float.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 6],
-  });
+  const contentStyle = {
+    opacity: enter,
+    transform: [
+      {
+        translateY: enter.interpolate({
+          inputRange: [0, 1],
+          outputRange: [24, 0],
+        }),
+      },
+    ],
+  };
+
+  const goToLogin = () => navigation.navigate('Login');
 
   return (
     <View style={styles.container}>
-      <View style={[styles.hero, { paddingTop: insets.top }]}>
-        <View style={styles.radar}>
-          {RING_SIZES.map(size => (
-            <View
-              key={size}
-              style={[
-                styles.ring,
-                { width: size, height: size, borderRadius: size / 2 },
-              ]}
-            />
-          ))}
-          <Animated.View
-            style={[
-              styles.pulse,
-              { opacity: pulseOpacity, transform: [{ scale: pulseScale }] },
-            ]}
-          />
-          <View style={styles.logoBadge}>
-            <Image
-              source={require('../assets/smile.png')}
-              style={styles.smile}
-              resizeMode="contain"
-              accessibilityLabel="Sahbi"
-            />
-          </View>
-        </View>
+      <StatusBar barStyle="light-content" />
+      <View style={[styles.blob, styles.blobTop]} pointerEvents="none" />
 
-        {DOTS.map((dot, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dot,
-              {
-                left: dot.left,
-                top: dot.top,
-                width: dot.size,
-                height: dot.size,
-                borderRadius: dot.size / 2,
-                backgroundColor: dot.color,
-              },
-            ]}
-          />
-        ))}
-
-        {CHIPS.map((chip, index) => (
-          <Animated.View
-            key={chip.label}
-            style={[
-              styles.chip,
-              {
-                left: chip.left,
-                top: chip.top,
-                backgroundColor: chip.bg,
-                transform: [
-                  { translateY: index % 2 === 0 ? floatY : floatYReverse },
-                ],
-              },
-            ]}
-          >
-            <Text style={[styles.chipText, { color: chip.fg }]}>
-              {chip.label}
-            </Text>
-          </Animated.View>
-        ))}
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <Image
+          source={require('../assets/app_icon.png')}
+          style={styles.headerIcon}
+          accessibilityLabel="Sahbi"
+        />
+        <Text style={styles.brand}>Sahbi</Text>
       </View>
 
-      <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
-        <View style={styles.handle} />
-
-        <View style={styles.intro}>
-          <View style={styles.badge}>
-            <View style={styles.liveDot} />
-            <Text style={styles.badgeText}>People nearby are making plans</Text>
-          </View>
-          <Text style={styles.title} accessibilityRole="header">
-            Make friends{'\n'}
-            <Text style={styles.titleAccent}>around the corner</Text>
-          </Text>
-          <Text style={styles.subtitle}>
-            Meet people who share your vibe — from morning coffee to weekend
-            adventures.
-          </Text>
-        </View>
-
-        <View style={styles.actions}>
-          <PrimaryButton
-            title="Get started"
-            onPress={() => navigation.navigate('Login')}
+      <View
+        style={styles.hero}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <View style={styles.ringBox}>
+          <Animated.View style={[styles.glow, { opacity: glowOpacity }]} />
+          <Animated.Image
+            source={require('../assets/welcome_ring.png')}
+            style={[styles.ring, { transform: [{ rotate }] }]}
+          />
+          <Animated.Image
+            source={require('../assets/welcome_leaf.png')}
+            style={[styles.leaf, { transform: [{ scale: leafScale }] }]}
           />
         </View>
       </View>
+
+      <Animated.View
+        style={[
+          styles.content,
+          contentStyle,
+          { paddingBottom: insets.bottom + 16 },
+        ]}
+      >
+        <Text style={styles.title} accessibilityRole="header">
+          Give every item a{'\n'}
+          <Text style={styles.titleAccent}>second life</Text>
+        </Text>
+        <Text style={styles.subtitle}>
+          Buy, sell and exchange pre-loved things near you.
+        </Text>
+
+        <Pressable
+          onPress={goToLogin}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+        >
+          <Text style={styles.buttonText}>Get started</Text>
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
@@ -211,124 +153,102 @@ export function WelcomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.secondary,
-  },
-  hero: {
-    flex: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.brandNavy,
     overflow: 'hidden',
   },
-  radar: {
-    width: 320,
-    height: 320,
+  blob: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  blobTop: {
+    width: 420,
+    height: 420,
+    top: -160,
+    right: -160,
+    backgroundColor: colors.brandTurquoise,
+    opacity: 0.1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 24,
+  },
+  headerIcon: {
+    width: 32,
+    height: 32,
+  },
+  brand: {
+    fontSize: 22,
+    fontFamily: fonts.extraBold,
+    color: colors.textOnSecondary,
+  },
+  hero: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  ringBox: {
+    width: RING_SIZE,
+    height: RING_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  glow: {
+    position: 'absolute',
+    width: RING_SIZE * 0.62,
+    height: RING_SIZE * 0.62,
+    borderRadius: RING_SIZE,
+    backgroundColor: colors.brandTurquoise,
   },
   ring: {
     position: 'absolute',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
+    width: RING_SIZE,
+    height: RING_SIZE,
   },
-  pulse: {
-    position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: colors.primary,
+  leaf: {
+    width: 104,
+    height: 104,
   },
-  logoBadge: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 12,
-  },
-  smile: {
-    width: 84,
-    height: 68,
-  },
-  dot: {
-    position: 'absolute',
-  },
-  chip: {
-    position: 'absolute',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  chipText: {
-    fontSize: 14,
-    fontFamily: fonts.semiBold,
-  },
-  sheet: {
-    flex: 9,
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 36,
-    borderTopRightRadius: 36,
+  content: {
     paddingHorizontal: 24,
-    paddingTop: 12,
-    justifyContent: 'space-between',
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 40,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: colors.border,
-  },
-  intro: {
-    gap: 12,
-    marginTop: 12,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 8,
-    backgroundColor: colors.primarySoft,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-  },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.success,
-  },
-  badgeText: {
-    fontSize: 13,
-    fontFamily: fonts.semiBold,
-    color: colors.secondary,
+    paddingTop: 8,
   },
   title: {
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 34,
+    lineHeight: 40,
     fontFamily: fonts.extraBold,
-    color: colors.secondary,
+    color: colors.textOnSecondary,
   },
   titleAccent: {
-    color: colors.accentCoral,
+    color: colors.brandMint,
   },
   subtitle: {
+    marginTop: 10,
     fontSize: 16,
     lineHeight: 24,
     fontFamily: fonts.regular,
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.72)',
   },
-  actions: {
-    paddingBottom: 8,
+  button: {
+    marginTop: 32,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.brandEmerald,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.brandEmerald,
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  buttonText: {
+    fontSize: 17,
+    fontFamily: fonts.bold,
+    color: colors.brandNavy,
+  },
+  pressed: {
+    opacity: 0.8,
   },
 });

@@ -8,9 +8,11 @@ import {
   createNativeStackNavigator,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
+import { CategoryScreen } from '../screens/CategoryScreen';
 import { ChatScreen } from '../screens/ChatScreen';
-import { CreateMeetupScreen } from '../screens/CreateMeetupScreen';
+import { ListingDetailScreen } from '../screens/ListingDetailScreen';
 import { LoginScreen } from '../screens/LoginScreen';
+import { MyItemsScreen } from '../screens/MyItemsScreen';
 import { OtpScreen } from '../screens/OtpScreen';
 import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 import { SplashScreen } from '../screens/SplashScreen';
@@ -69,8 +71,10 @@ export function RootNavigator() {
           component={MainTabs}
           options={{ animation: 'fade', gestureEnabled: false }}
         />
+        <Stack.Screen name="ListingDetail" component={ListingDetailScreen} />
+        <Stack.Screen name="Category" component={CategoryScreen} />
+        <Stack.Screen name="MyItems" component={MyItemsScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} />
-        <Stack.Screen name="CreateMeetup" component={CreateMeetupScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

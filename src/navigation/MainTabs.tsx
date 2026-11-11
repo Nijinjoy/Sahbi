@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   Image,
   ImageSourcePropType,
@@ -9,10 +10,13 @@ import {
   BottomTabBarButtonProps,
   createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs';
+import { SAMPLE_CHATS } from '../data/sampleChats';
+import { CategoriesScreen } from '../screens/tabs/CategoriesScreen';
 import { ChatsScreen } from '../screens/tabs/ChatsScreen';
-import { DiscoverScreen } from '../screens/tabs/DiscoverScreen';
-import { MeetupsScreen } from '../screens/tabs/MeetupsScreen';
+import { HomeScreen } from '../screens/tabs/HomeScreen';
 import { ProfileScreen } from '../screens/tabs/ProfileScreen';
+import { SellScreen } from '../screens/tabs/SellScreen';
+import { useReadChats } from '../state/readChats';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 import { MainTabParamList } from './types';
@@ -20,9 +24,10 @@ import { MainTabParamList } from './types';
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const ICONS: Record<keyof MainTabParamList, ImageSourcePropType> = {
-  Discover: require('../assets/icons/discover.png'),
+  Home: require('../assets/icons/home.png'),
+  Categories: require('../assets/icons/categories.png'),
+  Sell: require('../assets/icons/plus.png'),
   Chats: require('../assets/icons/chats.png'),
-  Meetups: require('../assets/icons/meetups.png'),
   Profile: require('../assets/icons/profile.png'),
 };
 
@@ -34,7 +39,7 @@ function TabIcon({
   focused: boolean;
 }) {
   return (
-    <View style={[styles.iconPill, focused && styles.iconPillActive]}>
+    <View style={styles.iconPill}>
       <Image
         source={source}
         style={[
@@ -53,9 +58,10 @@ function makeTabBarIcon(source: ImageSourcePropType) {
 }
 
 const TAB_BAR_ICONS = {
-  Discover: makeTabBarIcon(ICONS.Discover),
+  Home: makeTabBarIcon(ICONS.Home),
+  Categories: makeTabBarIcon(ICONS.Categories),
+  Sell: makeTabBarIcon(ICONS.Sell),
   Chats: makeTabBarIcon(ICONS.Chats),
-  Meetups: makeTabBarIcon(ICONS.Meetups),
   Profile: makeTabBarIcon(ICONS.Profile),
 };
 
@@ -64,6 +70,12 @@ function TabBarButton({ href: _href, ...props }: BottomTabBarButtonProps) {
 }
 
 export function MainTabs() {
+  const readIds = useReadChats();
+  const unreadChats = useMemo(
+    () => SAMPLE_CHATS.filter(c => c.unread > 0 && !readIds.has(c.id)).length,
+    [readIds],
+  );
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -75,11 +87,17 @@ export function MainTabs() {
         tabBarLabelStyle: styles.label,
         tabBarStyle: styles.tabBar,
         tabBarItemStyle: styles.tabItem,
+        tabBarBadgeStyle: styles.badge,
       })}
     >
-      <Tab.Screen name="Discover" component={DiscoverScreen} />
-      <Tab.Screen name="Chats" component={ChatsScreen} />
-      <Tab.Screen name="Meetups" component={MeetupsScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Categories" component={CategoriesScreen} />
+      <Tab.Screen name="Sell" component={SellScreen} />
+      <Tab.Screen
+        name="Chats"
+        component={ChatsScreen}
+        options={{ tabBarBadge: unreadChats > 0 ? unreadChats : undefined }}
+      />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -88,21 +106,18 @@ export function MainTabs() {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: colors.background,
-    borderTopColor: '#ECEEF2',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
     paddingTop: 8,
   },
   tabItem: {
     gap: 4,
   },
   iconPill: {
-    width: 56,
+    width: 52,
     height: 32,
-    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconPillActive: {
-    backgroundColor: colors.primary,
   },
   icon: {
     width: 24,
@@ -111,5 +126,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontFamily: fonts.semiBold,
+  },
+  badge: {
+    backgroundColor: colors.accentCoral,
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontFamily: fonts.bold,
   },
 });

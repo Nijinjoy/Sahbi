@@ -67,20 +67,17 @@ export function LoginScreen({ navigation }: Props) {
           bounces={false}
         >
           <View style={[styles.body, { paddingTop: insets.top + 40 }]}>
-            <View style={styles.badge}>
-              <Image
-                source={require('../assets/smile.png')}
-                style={styles.badgeImg}
-                resizeMode="contain"
-                accessibilityLabel="Sahbi"
-              />
-            </View>
+            <Image
+              source={require('../assets/app_icon.png')}
+              style={styles.badge}
+              accessibilityLabel="Sahbi"
+            />
 
             <Text style={styles.title} accessibilityRole="header">
               Welcome back
             </Text>
             <Text style={styles.subtitle}>
-              Your friends are waiting. Enter your number to log in.
+              Great finds are waiting. Enter your number to log in.
             </Text>
 
             <Text style={styles.label}>Mobile number</Text>
@@ -141,15 +138,7 @@ const styles = StyleSheet.create({
   badge: {
     width: 64,
     height: 64,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 20,
-  },
-  badgeImg: {
-    width: 44,
-    height: 36,
   },
   body: {
     alignItems: 'flex-start',
@@ -186,7 +175,7 @@ const styles = StyleSheet.create({
   },
   inputRowFocused: {
     borderBottomWidth: 2,
-    borderBottomColor: colors.primary,
+    borderBottomColor: colors.brandEmerald,
   },
   inputRowError: {
     borderBottomColor: colors.error,

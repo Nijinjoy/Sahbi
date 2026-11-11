@@ -33,7 +33,7 @@ export function BackButton({ onPress, variant = 'circle' }: Props) {
       accessibilityRole="button"
       accessibilityLabel="Back"
       hitSlop={8}
-      style={styles.button}
+      style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
     >
       <View style={styles.chevron} />
     </Pressable>
@@ -47,7 +47,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brandNavy,
+  },
+  buttonPressed: {
+    opacity: 0.8,
   },
   chevron: {
     width: 12,
@@ -55,7 +58,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     borderLeftWidth: 2.5,
     borderBottomWidth: 2.5,
-    borderColor: colors.background,
+    borderColor: colors.textOnSecondary,
     transform: [{ rotate: '45deg' }],
   },
   arrowButton: {

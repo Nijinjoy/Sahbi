@@ -43,15 +43,23 @@ export function PrimaryButton({
 }
 
 const styles = StyleSheet.create({
+  // Dark navy, matching the app icon background.
   button: {
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: colors.secondary,
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
   },
   disabled: {
-    opacity: 0.45,
+    backgroundColor: '#9AA6B8',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   pressed: {
     opacity: 0.85,
@@ -59,6 +67,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 17,
     fontFamily: fonts.bold,
-    color: colors.textOnPrimary,
+    color: colors.textOnSecondary,
   },
 });
