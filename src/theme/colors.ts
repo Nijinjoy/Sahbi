@@ -8,8 +8,13 @@ export const colors = {
   primarySoft: '#E6F7F0',
   /** Deep navy: headings, dark buttons, headers. */
   secondary: '#0B2340',
-  /** Deep navy behind the app icon and splash. */
+  /** Deep navy used by headers and dark surfaces. */
   brandNavy: '#0B2340',
+  /** Forest green behind the app icon and splash. */
+  brandForest: '#0F3F2E',
+  /** Champagne gold and warm ivory from the knot logo. */
+  brandGold: '#D8B577',
+  brandIvory: '#FBF6EC',
   brandEmerald: '#10B981',
   brandMint: '#34D399',
   brandTurquoise: '#2DD4BF',

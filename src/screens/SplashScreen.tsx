@@ -41,7 +41,7 @@ export function SplashScreen({ onFinish, duration = 3000 }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.brandNavy,
+    backgroundColor: colors.brandForest,
     alignItems: 'center',
     justifyContent: 'center',
   },

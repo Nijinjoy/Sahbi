@@ -69,13 +69,13 @@ export function WelcomeScreen({ navigation }: Props) {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
-  const leafScale = breathe.interpolate({
+  const knotScale = breathe.interpolate({
     inputRange: [0, 1],
     outputRange: [1, 1.06],
   });
   const glowOpacity = breathe.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.16, 0.28],
+    outputRange: [0.06, 0.14],
   });
   const contentStyle = {
     opacity: enter,
@@ -117,8 +117,8 @@ export function WelcomeScreen({ navigation }: Props) {
             style={[styles.ring, { transform: [{ rotate }] }]}
           />
           <Animated.Image
-            source={require('../assets/welcome_leaf.png')}
-            style={[styles.leaf, { transform: [{ scale: leafScale }] }]}
+            source={require('../assets/welcome_knot.png')}
+            style={[styles.knot, { transform: [{ scale: knotScale }] }]}
           />
         </View>
       </View>
@@ -153,7 +153,7 @@ export function WelcomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.brandNavy,
+    backgroundColor: colors.brandForest,
     overflow: 'hidden',
   },
   blob: {
@@ -165,8 +165,8 @@ const styles = StyleSheet.create({
     height: 420,
     top: -160,
     right: -160,
-    backgroundColor: colors.brandTurquoise,
-    opacity: 0.1,
+    backgroundColor: colors.brandGold,
+    opacity: 0.08,
   },
   header: {
     flexDirection: 'row',
@@ -199,16 +199,16 @@ const styles = StyleSheet.create({
     width: RING_SIZE * 0.62,
     height: RING_SIZE * 0.62,
     borderRadius: RING_SIZE,
-    backgroundColor: colors.brandTurquoise,
+    backgroundColor: colors.brandGold,
   },
   ring: {
     position: 'absolute',
     width: RING_SIZE,
     height: RING_SIZE,
   },
-  leaf: {
-    width: 104,
-    height: 104,
+  knot: {
+    width: 150,
+    height: 150,
   },
   content: {
     paddingHorizontal: 24,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     color: colors.textOnSecondary,
   },
   titleAccent: {
-    color: colors.brandMint,
+    color: colors.brandGold,
   },
   subtitle: {
     marginTop: 10,
@@ -234,10 +234,10 @@ const styles = StyleSheet.create({
     marginTop: 32,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.brandEmerald,
+    backgroundColor: colors.brandGold,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.brandEmerald,
+    shadowColor: colors.brandGold,
     shadowOpacity: 0.45,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 17,
     fontFamily: fonts.bold,
-    color: colors.brandNavy,
+    color: colors.brandForest,
   },
   pressed: {
     opacity: 0.8,
