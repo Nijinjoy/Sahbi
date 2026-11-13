@@ -28,8 +28,11 @@ const GUTTER = 24;
 const GAP = 14;
 
 export function CategoryScreen({ navigation, route }: Props) {
-  const { name } = route.params;
-  const emoji = CATEGORIES.find(c => c.name === name)?.emoji ?? '📦';
+  const { name, includes } = route.params;
+  const emoji =
+    route.params.emoji ??
+    CATEGORIES.find(c => c.name === name)?.emoji ??
+    '📦';
   const listings = useListings();
   const saved = useSaved();
   const { width } = useWindowDimensions();
@@ -41,8 +44,9 @@ export function CategoryScreen({ navigation, route }: Props) {
   }, [name]);
 
   const results = useMemo(() => {
+    const categories = includes ?? [name];
     const items = listings.filter(
-      l => l.category === name && !l.mine && !l.sold,
+      l => categories.includes(l.category) && !l.mine && !l.sold,
     );
     const compare: Record<Sort, (a: typeof items[0], b: typeof items[0]) => number> = {
       Nearest: (a, b) => a.distanceKm - b.distanceKm,
@@ -51,7 +55,7 @@ export function CategoryScreen({ navigation, route }: Props) {
       'Highest price': (a, b) => b.price - a.price,
     };
     return [...items].sort(compare[sort]);
-  }, [listings, name, sort]);
+  }, [listings, name, includes, sort]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>

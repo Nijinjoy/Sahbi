@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -25,13 +26,16 @@ import {
 import { RootStackParamList } from '../../navigation/types';
 import { addListing } from '../../state/listings';
 import { useProfile } from '../../state/profile';
+import { NotificationBell } from '../../components/NotificationBell';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 
+const GOLD_BORDER = 'rgba(168,127,61,0.3)';
+const GOLD_DEEP = '#A87F3D';
 const TITLE_MAX = 50;
 const DESCRIPTION_MAX = 500;
 const PRICE_MAX = 1_000_000;
-const GUTTER = 24;
+const GUTTER = 16;
 
 const CONDITION_EMOJI: Record<Condition, string> = {
   New: '✨',
@@ -406,6 +410,15 @@ export function SellScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.blob} pointerEvents="none" />
+      <View style={styles.header}>
+        <Text style={styles.title} accessibilityRole="header">
+          Sell
+        </Text>
+        <NotificationBell />
+      </View>
+
       {/* Top bar: back, step count, clear */}
       <View style={styles.topBar}>
         <Pressable
@@ -502,7 +515,18 @@ export function SellScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.brandIvory,
+    overflow: 'hidden',
+  },
+  blob: {
+    position: 'absolute',
+    width: 320,
+    height: 320,
+    top: -170,
+    right: -130,
+    borderRadius: 999,
+    backgroundColor: colors.brandGold,
+    opacity: 0.18,
   },
   flex: {
     flex: 1,
@@ -514,6 +538,20 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
 
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: GUTTER,
+    paddingTop: 16,
+  },
+  title: {
+    fontSize: 32,
+    lineHeight: 40,
+    fontFamily: fonts.extraBold,
+    color: colors.brandForest,
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -531,7 +569,7 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 36,
     lineHeight: 40,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   stepCount: {
     fontSize: 14,
@@ -546,7 +584,7 @@ const styles = StyleSheet.create({
   clearText: {
     fontSize: 14,
     fontFamily: fonts.bold,
-    color: colors.accentTeal,
+    color: GOLD_DEEP,
   },
   segments: {
     flexDirection: 'row',
@@ -558,10 +596,10 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 5,
     borderRadius: 3,
-    backgroundColor: colors.border,
+    backgroundColor: '#E4DCCB',
   },
   segmentDone: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.brandForest,
   },
   segmentCurrent: {
     backgroundColor: colors.primary,
@@ -576,7 +614,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     lineHeight: 36,
     fontFamily: fonts.extraBold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   subtitle: {
     marginTop: 6,
@@ -594,7 +632,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 34,
     fontFamily: fonts.bold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   underline: {
     height: 2.5,
@@ -655,7 +693,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 17,
     fontFamily: fonts.extraBold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
 
   optionList: {
@@ -668,7 +706,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: GOLD_BORDER,
   },
   optionOn: {
     borderColor: colors.primary,
@@ -678,7 +716,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -689,7 +727,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 22,
     fontFamily: fonts.bold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   optionHint: {
     fontSize: 13,
@@ -699,7 +737,7 @@ const styles = StyleSheet.create({
   },
   optionChevron: {
     fontSize: 26,
-    color: colors.border,
+    color: '#C9B48A',
   },
 
   priceStage: {
@@ -709,7 +747,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 28,
     borderRadius: 24,
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
   },
   priceCurrency: {
     fontSize: 22,
@@ -722,7 +760,7 @@ const styles = StyleSheet.create({
     fontSize: 52,
     lineHeight: 64,
     fontFamily: fonts.extraBold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   freeColor: {
     color: colors.success,
@@ -739,12 +777,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 21,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: GOLD_BORDER,
     justifyContent: 'center',
   },
   pillOn: {
-    backgroundColor: colors.secondary,
-    borderColor: colors.secondary,
+    backgroundColor: colors.brandForest,
+    borderColor: colors.brandForest,
   },
   pillFree: {
     backgroundColor: colors.success,
@@ -753,7 +791,7 @@ const styles = StyleSheet.create({
   pillText: {
     fontSize: 14,
     fontFamily: fonts.bold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   pillTextOn: {
     color: '#FFFFFF',
@@ -766,7 +804,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 15,
     fontFamily: fonts.bold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   labelRow: {
     flexDirection: 'row',
@@ -783,11 +821,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: GOLD_BORDER,
+    backgroundColor: '#FFFFFF',
     fontSize: 16,
     fontFamily: fonts.medium,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   textArea: {
     height: 130,
@@ -805,7 +843,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: GOLD_BORDER,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -815,7 +853,7 @@ const styles = StyleSheet.create({
   },
   summaryBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: GOLD_BORDER,
   },
   summaryLabel: {
     width: 78,
@@ -827,12 +865,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: fonts.bold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   edit: {
     fontSize: 13,
     fontFamily: fonts.bold,
-    color: colors.accentTeal,
+    color: GOLD_DEEP,
   },
 
   actions: {
@@ -844,13 +882,13 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.brandForest,
   },
   ctaPost: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.brandForest,
   },
   ctaDisabled: {
-    backgroundColor: colors.border,
+    backgroundColor: '#E4DCCB',
   },
   ctaText: {
     fontSize: 17,

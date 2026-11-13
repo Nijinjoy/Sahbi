@@ -5,6 +5,7 @@ import {
   ImageSourcePropType,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Switch,
   Text,
@@ -21,6 +22,7 @@ import {
   refreshProfileLocation,
   requestLocationPermission,
 } from '../../utils/location';
+import { NotificationBell } from '../../components/NotificationBell';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 import packageJson from '../../../package.json';
@@ -35,6 +37,8 @@ const ICONS = {
   logout: require('../../assets/icons/profile/logout.png'),
   chevron: require('../../assets/icons/profile/chevron.png'),
 };
+
+const GOLD_BORDER = 'rgba(168,127,61,0.3)';
 
 const SAFETY_TIPS =
   '• Meet in a public place, or a building lobby with a guard.\n' +
@@ -78,9 +82,9 @@ function Row({
         <Switch
           value={toggle}
           onValueChange={onToggle}
-          trackColor={{ false: colors.border, true: colors.secondary }}
-          thumbColor={colors.background}
-          ios_backgroundColor={colors.border}
+          trackColor={{ false: '#E4DCCB', true: colors.brandForest }}
+          thumbColor="#FFFFFF"
+          ios_backgroundColor="#E4DCCB"
           accessibilityLabel={label}
         />
       ) : onPress && !danger ? (
@@ -181,10 +185,15 @@ export function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.blob} pointerEvents="none" />
       <View style={[styles.header, scrolled && styles.headerScrolled]}>
-        <Text style={styles.title} accessibilityRole="header">
-          Profile
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title} accessibilityRole="header">
+            Profile
+          </Text>
+          <NotificationBell />
+        </View>
       </View>
 
       <ScrollView
@@ -227,10 +236,15 @@ export function ProfileScreen() {
           {stats.map(stat => (
             <Pressable
               key={stat.label}
-              onPress={() => navigation.navigate('MyItems', { view: stat.view })}
+              onPress={() =>
+                navigation.navigate('MyItems', { view: stat.view })
+              }
               accessibilityRole="button"
               accessibilityLabel={`${stat.value} ${stat.label}`}
-              style={({ pressed }) => [styles.stat, pressed && styles.rowPressed]}
+              style={({ pressed }) => [
+                styles.stat,
+                pressed && styles.rowPressed,
+              ]}
             >
               <Text style={styles.statValue}>{stat.value}</Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
@@ -280,7 +294,13 @@ export function ProfileScreen() {
         </Section>
 
         <View style={[styles.group, styles.logoutGroup]}>
-          <Row icon={ICONS.logout} label="Log out" onPress={logOut} danger last />
+          <Row
+            icon={ICONS.logout}
+            label="Log out"
+            onPress={logOut}
+            danger
+            last
+          />
         </View>
 
         <Text style={styles.version}>Sahbi v{packageJson.version}</Text>
@@ -289,29 +309,46 @@ export function ProfileScreen() {
   );
 }
 
-const GUTTER = 24;
+const GUTTER = 16;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.brandIvory,
+    overflow: 'hidden',
+  },
+  blob: {
+    position: 'absolute',
+    width: 320,
+    height: 320,
+    top: -170,
+    right: -130,
+    borderRadius: 999,
+    backgroundColor: colors.brandGold,
+    opacity: 0.18,
   },
   header: {
     paddingHorizontal: GUTTER,
     paddingTop: 16,
     paddingBottom: 8,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'transparent',
   },
   headerScrolled: {
-    borderBottomColor: colors.border,
+    borderBottomColor: GOLD_BORDER,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
   title: {
     fontSize: 32,
     lineHeight: 40,
     fontFamily: fonts.extraBold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   content: {
     paddingHorizontal: GUTTER,
@@ -327,7 +364,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     fontFamily: fonts.extraBold,
-    color: colors.secondary,
+    color: colors.brandForest,
     textAlign: 'center',
   },
   meta: {
@@ -364,13 +401,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: GOLD_BORDER,
+    backgroundColor: '#FFFFFF',
   },
   statValue: {
     fontSize: 22,
     lineHeight: 28,
     fontFamily: fonts.extraBold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   statLabel: {
     fontSize: 13,
@@ -391,8 +429,9 @@ const styles = StyleSheet.create({
   group: {
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: GOLD_BORDER,
     overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
   },
   logoutGroup: {
     marginTop: 24,
@@ -406,15 +445,15 @@ const styles = StyleSheet.create({
   },
   rowDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: GOLD_BORDER,
   },
   rowPressed: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(216,181,119,0.15)',
   },
   rowIcon: {
     width: 22,
     height: 22,
-    tintColor: colors.secondary,
+    tintColor: colors.brandForest,
   },
   rowIconDanger: {
     tintColor: colors.error,
@@ -423,7 +462,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontFamily: fonts.medium,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   rowLabelDanger: {
     fontFamily: fonts.bold,

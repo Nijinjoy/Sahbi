@@ -16,7 +16,7 @@ export type RootStackParamList = {
   ProfileSetup: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   ListingDetail: { listingId: string };
-  Category: { name: string };
+  Category: { name: string; includes?: string[]; emoji?: string };
   MyItems: { view?: 'selling' | 'saved' } | undefined;
   Chat: { chatId: string };
 };

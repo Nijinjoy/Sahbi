@@ -3,6 +3,7 @@ import {
   FlatList,
   Image,
   Pressable,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -17,9 +18,12 @@ import { Chat, SAMPLE_CHATS } from '../../data/sampleChats';
 import { RootStackParamList } from '../../navigation/types';
 import { useListings } from '../../state/listings';
 import { useReadChats } from '../../state/readChats';
+import { NotificationBell } from '../../components/NotificationBell';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 
+const GOLD_BORDER = 'rgba(168,127,61,0.3)';
+const GOLD_DEEP = '#A87F3D';
 const FILTERS = ['All', 'Unread', 'Buying', 'Selling'] as const;
 type Filter = (typeof FILTERS)[number];
 
@@ -43,7 +47,9 @@ function ChatRow({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${chat.name}${subject ? `, ${subject}` : ''}. ${chat.lastMessage}. ${chat.time}${unread ? `. ${chat.unread} unread` : ''}`}
+      accessibilityLabel={`${chat.name}${subject ? `, ${subject}` : ''}. ${
+        chat.lastMessage
+      }. ${chat.time}${unread ? `. ${chat.unread} unread` : ''}`}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >
       <Avatar name={chat.name} size={48} />
@@ -135,10 +141,15 @@ export function ChatsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.blob} pointerEvents="none" />
       <View style={styles.header}>
-        <Text style={styles.title} accessibilityRole="header">
-          Chats
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title} accessibilityRole="header">
+            Chats
+          </Text>
+          <NotificationBell />
+        </View>
 
         <View style={[styles.search, searchFocused && styles.searchFocused]}>
           <Image source={SEARCH_ICON} style={styles.searchIcon} />
@@ -172,9 +183,7 @@ export function ChatsScreen() {
                 <Text style={[styles.tabText, selected && styles.tabTextOn]}>
                   {option}
                 </Text>
-                <View
-                  style={[styles.tabLine, selected && styles.tabLineOn]}
-                />
+                <View style={[styles.tabLine, selected && styles.tabLineOn]} />
               </Pressable>
             );
           })}
@@ -201,24 +210,41 @@ export function ChatsScreen() {
   );
 }
 
-const GUTTER = 24;
+const GUTTER = 16;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.brandIvory,
+    overflow: 'hidden',
+  },
+  blob: {
+    position: 'absolute',
+    width: 320,
+    height: 320,
+    top: -170,
+    right: -130,
+    borderRadius: 999,
+    backgroundColor: colors.brandGold,
+    opacity: 0.18,
   },
   header: {
     paddingHorizontal: GUTTER,
     paddingTop: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomColor: GOLD_BORDER,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
   title: {
     fontSize: 32,
     lineHeight: 40,
     fontFamily: fonts.extraBold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   search: {
     flexDirection: 'row',
@@ -229,12 +255,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: GOLD_BORDER,
+    backgroundColor: '#FFFFFF',
   },
   searchFocused: {
-    borderColor: colors.secondary,
-    backgroundColor: colors.background,
+    borderColor: colors.brandForest,
+    backgroundColor: '#FFFFFF',
   },
   searchIcon: {
     width: 18,
@@ -247,7 +273,7 @@ const styles = StyleSheet.create({
     padding: 0,
     fontSize: 16,
     fontFamily: fonts.regular,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   tabs: {
     flexDirection: 'row',
@@ -265,7 +291,7 @@ const styles = StyleSheet.create({
   },
   tabTextOn: {
     fontFamily: fonts.bold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   tabLine: {
     alignSelf: 'stretch',
@@ -275,7 +301,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   tabLineOn: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.brandForest,
   },
   list: {
     paddingTop: 8,
@@ -289,7 +315,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   rowPressed: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(216,181,119,0.15)',
   },
   rowBody: {
     flex: 1,
@@ -304,7 +330,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     fontFamily: fonts.semiBold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   nameUnread: {
     fontFamily: fonts.bold,
@@ -316,7 +342,7 @@ const styles = StyleSheet.create({
   },
   timeUnread: {
     fontFamily: fonts.semiBold,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   subject: {
     fontSize: 13,
@@ -333,10 +359,10 @@ const styles = StyleSheet.create({
   },
   previewUnread: {
     fontFamily: fonts.medium,
-    color: colors.secondary,
+    color: colors.brandForest,
   },
   typing: {
-    color: colors.accentTeal,
+    color: GOLD_DEEP,
   },
   dot: {
     width: 8,
